@@ -33,3 +33,14 @@ jobs:
           name: build
           path: .next
           retention-days: 30
+
+      - uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Download zip file here 👉 [build](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}})'
+            })

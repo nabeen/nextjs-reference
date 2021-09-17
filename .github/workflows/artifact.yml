@@ -1,0 +1,46 @@
+name: artifact
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.15.1'
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            node-
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Archive Build Dir
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: .next
+          retention-days: 30
+
+      - uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Download zip file here 👉 [build](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}})'
+            })
